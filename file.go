@@ -3,7 +3,7 @@ package main
 import "io/ioutil"
 
 // File contains metadata and data of a read logfile
-type File struct {
+type FileT struct {
 	filename  string
 	linecount int
 	lines     []int
@@ -11,9 +11,9 @@ type File struct {
 }
 
 // ReadFile reads all the file into a buffer
-func ReadFile(filename string) (*File, error) {
+func ReadFile(filename string) (*FileT, error) {
 	var (
-		newfile File
+		newfile FileT
 		err     error
 	)
 	newfile.filename = filename
@@ -26,7 +26,7 @@ func ReadFile(filename string) (*File, error) {
 }
 
 // indexLines searches all newlines to store line starts
-func (f *File) indexLines() {
+func (f *FileT) indexLines() {
 
 	// bail out if file is empty
 	if len(f.contents) < 1 {

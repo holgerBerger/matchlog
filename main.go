@@ -6,10 +6,11 @@ import (
 	termbox "github.com/nsf/termbox-go"
 )
 
-var files []*File
-
 // main programm, reading arguments
 func main() {
+
+	// files holds list of files
+	var files []*FileT
 
 	// read files from commandline
 	for _, filename := range os.Args[1:] {
@@ -19,8 +20,14 @@ func main() {
 		}
 	}
 
+	// create the buffer aggregating the files
+	buffer := NewBuffer()
+
+	// FIXME add first file for testing
+	buffer.addFile(files[0])
+
 	// create a screen, this is the event loop
-	screen := NewScreen()
+	screen := NewScreen(files, buffer)
 
 	// run the event loop
 	screen.eventLoop()
