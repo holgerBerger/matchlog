@@ -7,15 +7,17 @@ import "fmt"
 // BufferT represents the buffer as shown on the screen, so the aggregation of files sorted for time
 // and filtered
 type BufferT struct {
-	lineps []*byte  // array of pointers to start of lines of aggregation of files
-	files  []*FileT // list of files added to the buffer
+	linecount int       // total number of lines
+	lineps    []int     // array of pointers to start of lines of aggregation of files
+	contps    []*[]byte // array of pointers to start of contents, for each line of Buffer
+	files     []*FileT  // list of files added to the buffer
 	// filters []FilterT // list of filters added to the buffer
 }
 
 // NewBuffer allocates an empty new buffer
 func NewBuffer() *BufferT {
 	var buffer BufferT
-	buffer.lineps = make([]*byte, 0, 1024)
+	buffer.lineps = make([]int, 0, 1024)
 	buffer.files = make([]*FileT, 0, 10)
 	return &buffer
 }
@@ -38,11 +40,14 @@ func (b *BufferT) addFile(f *FileT) {
 	}
 
 	// FIXME dummy code for testing to handle ONE file
-	b.lineps = make([]*byte, f.linecount, f.linecount)
+	b.lineps = make([]int, f.linecount, f.linecount)
+	b.linecount = f.linecount
+	b.contps = make([]*[]byte, f.linecount, f.linecount)
 
 	for lnr := range f.lines[:len(f.lines)-1] {
 		fmt.Println(lnr, f.lines[lnr])
-		b.lineps[lnr] = &f.contents[f.lines[lnr]]
+		b.lineps[lnr] = f.lines[lnr]
+		b.contps[lnr] = &f.contents
 	}
 	// END oF dummy code
 }

@@ -11,6 +11,7 @@ type Screen struct {
 	w, h   int      // screensize
 	files  []*FileT // list of files
 	buffer *BufferT // buffer to be shown
+	offset int      // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
 }
 
 // NewScreen inits termbox
@@ -18,6 +19,7 @@ func NewScreen(files []*FileT, buffer *BufferT) *Screen {
 	newscreen := new(Screen)
 	newscreen.files = files
 	newscreen.buffer = buffer
+	newscreen.offset = 0
 
 	// init termbox
 	err := termbox.Init()
@@ -43,8 +45,6 @@ func (s *Screen) eventLoop() {
 
 	s.draw()
 
-	offset := 0
-
 loop:
 	for {
 		select {
@@ -53,10 +53,28 @@ loop:
 				break loop
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowDown {
-				offset++
+				if s.offset < s.buffer.linecount-s.h {
+					s.offset++
+				}
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowUp {
-				offset--
+				if s.offset > 0 {
+					s.offset--
+				}
+			}
+			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyPgdn {
+				if s.offset < s.buffer.linecount-s.h {
+					s.offset += s.h
+				} else {
+					s.offset = s.buffer.linecount - s.h
+				}
+			}
+			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyPgup {
+				if s.offset-s.h > 0 {
+					s.offset -= s.h
+				} else {
+					s.offset = 0
+				}
 			}
 		default:
 			s.draw()
@@ -69,25 +87,26 @@ loop:
 // draw paints whatever is needed
 func (s *Screen) draw() {
 
-	fileid := 0 // FIXME
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	s.w, s.h = termbox.Size()
 
+	// FIXME how to deal with long lines > w ?
 	for y := 0; y < s.h; y++ {
-		if y >= s.files[fileid].linecount {
+		if y+s.offset >= s.buffer.linecount {
 			break
 		}
 		for x := 0; x < s.w; x++ {
-			if x >= s.files[fileid].lines[y+1]-s.files[fileid].lines[y] {
+			linep := s.buffer.lineps[y+s.offset]
+			cont := s.buffer.contps[y+s.offset]
+			if (*cont)[linep+x] == 10 {
 				break
 			}
-			linep := s.files[fileid].lines[y]
-			if linep+x >= len(s.files[fileid].contents) {
-				break
-			}
-			rune := rune(s.files[fileid].contents[linep+x])
-			termbox.SetCell(x, y, rune, termbox.ColorBlack, termbox.ColorWhite)
+			rune := rune((*cont)[linep+x])
+			termbox.SetCell(x, y, rune, termbox.ColorBlack, termbox.ColorDefault)
 		}
 	}
 
 	// full redraw
 	termbox.Flush()
+
 }
