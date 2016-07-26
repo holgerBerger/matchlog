@@ -48,7 +48,7 @@ func (b *BufferT) addFile(f *FileT) {
 
 // sortFile has to be called after all files have been added with addFile
 func (b *BufferT) sortFile() {
-	// add file sorted by time
+	// add file to buffer sorted by time
 
 	// first init some file-local linecounter
 	filelinecounter := make([]int, len(b.files), len(b.files))

@@ -29,11 +29,13 @@ func main() {
 	}
 	buffer.sortFile()
 
-	// create a screen, this is the event loop
+	// create a screen
 	screen := NewScreen(files, buffer)
 
 	// run the event loop
 	screen.eventLoop()
+
+	// cleanup
 	termbox.Close()
 
 }
