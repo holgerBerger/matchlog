@@ -1,6 +1,6 @@
 package main
 
-import "fmt"
+import "time"
 
 // FIXME buffer should may be hold runes and not bytes? UTF files needs testing
 
@@ -39,15 +39,38 @@ func (b *BufferT) addFile(f *FileT) {
 		b.files = append(b.files, f)
 	}
 
-	// FIXME dummy code for testing to handle ONE file
-	b.lineps = make([]int, f.linecount, f.linecount)
-	b.linecount = f.linecount
-	b.contps = make([]*[]byte, f.linecount, f.linecount)
+	// make space for new file
+	b.lineps = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
+	b.contps = make([]*[]byte, b.linecount+f.linecount, b.linecount+f.linecount)
+	b.linecount += f.linecount
 
-	for lnr := range f.lines[:len(f.lines)-1] {
-		fmt.Println(lnr, f.lines[lnr])
-		b.lineps[lnr] = f.lines[lnr]
-		b.contps[lnr] = &f.contents
+}
+
+// sortFile has to be called after all files have been added with addFile
+func (b *BufferT) sortFile() {
+	// add file sorted by time
+
+	// first init some file-local linecounter
+	filelinecounter := make([]int, len(b.files), len(b.files))
+	for i := range filelinecounter {
+		filelinecounter[i] = 0
 	}
-	// END oF dummy code
+
+	for lnr := 0; lnr < b.linecount; lnr++ {
+		// find next line in time from all files
+		smallest := time.Unix(0xffffffff, 0)
+		smallestfile := -1
+		for file := range b.files {
+			if filelinecounter[file] < b.files[file].linecount {
+				if b.files[file].times[filelinecounter[file]].Before(smallest) {
+					smallest = b.files[file].times[filelinecounter[file]]
+					smallestfile = file
+				}
+			}
+		}
+		b.lineps[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
+		b.contps[lnr] = &b.files[smallestfile].contents
+		filelinecounter[smallestfile]++
+	}
+
 }

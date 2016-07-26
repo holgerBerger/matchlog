@@ -23,8 +23,11 @@ func main() {
 	// create the buffer aggregating the files
 	buffer := NewBuffer()
 
-	// FIXME add first file for testing
-	buffer.addFile(files[0])
+	// add all files to buffer
+	for f := range files {
+		buffer.addFile(files[f])
+	}
+	buffer.sortFile()
 
 	// create a screen, this is the event loop
 	screen := NewScreen(files, buffer)
