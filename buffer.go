@@ -12,6 +12,7 @@ type BufferT struct {
 	contps    []*[]byte // array of pointers to start of contents, for each line of Buffer
 	files     []*FileT  // list of files added to the buffer
 	// filters []FilterT // list of filters added to the buffer
+	rules []*RuleT // color rules to apply
 }
 
 // NewBuffer allocates an empty new buffer
