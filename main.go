@@ -10,11 +10,11 @@ import (
 func main() {
 
 	// files holds list of files
-	var files []*FileT
+	var files []*FlexFileT
 
 	// read files from commandline
 	for _, filename := range os.Args[1:] {
-		f, err := ReadFile(filename)
+		f, err := ReadFlexFile(filename)
 		if err == nil {
 			files = append(files, f)
 		}

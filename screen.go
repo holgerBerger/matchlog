@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"time"
 
 	termbox "github.com/nsf/termbox-go"
@@ -9,14 +8,14 @@ import (
 
 // Screen class to keep state of termbox
 type Screen struct {
-	w, h   int      // screensize
-	files  []*FileT // list of files
-	buffer *BufferT // buffer to be shown
-	offset int      // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
+	w, h   int          // screensize
+	files  []*FlexFileT // list of files
+	buffer *BufferT     // buffer to be shown
+	offset int          // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
 }
 
 // NewScreen inits termbox
-func NewScreen(files []*FileT, buffer *BufferT) *Screen {
+func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
 	newscreen := new(Screen)
 	newscreen.files = files
 	newscreen.buffer = buffer
@@ -50,7 +49,7 @@ loop:
 	for {
 		select {
 		case ev := <-eventQueue:
-			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyEsc {
+			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyEsc || ev.Ch == 'q') {
 				break loop
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowDown {
@@ -63,7 +62,7 @@ loop:
 					s.offset--
 				}
 			}
-			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyPgdn {
+			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyPgdn || ev.Key == termbox.KeySpace) {
 				if s.offset < s.buffer.linecount-s.h {
 					s.offset += s.h
 				} else {
@@ -97,29 +96,22 @@ func (s *Screen) draw() {
 			break
 		}
 
-		// get len of current line (this is a bit complex...)
 		linep := s.buffer.lineps[y+s.offset]
-		linepp1 := len(*s.buffer.contps[y+s.offset]) // this is mean, that is we search until end of file, hoping we find a linefeed
-
-		cont := s.buffer.contps[y+s.offset]                          // contents of current line
-		linelen := bytes.IndexByte((*cont)[linep:linepp1], byte(10)) // len of current line
-
 		var color termbox.Attribute
 
 		// if line is not empty, match the line
-		if linelen > 0 {
-			linebuffer := (*cont)[linep : linep+linelen]
-			color = s.buffer.rules.Match(linebuffer)
+		if len(s.buffer.lineps[y+s.offset]) > 0 {
+			color = s.buffer.rules.Match(linep)
 		} else {
 			color = termbox.ColorDefault
 		}
 
 		// render the line
 		for x := 0; x < s.w; x++ {
-			if (*cont)[linep+x] == 10 {
+			if linep[x] == '\n' {
 				break
 			}
-			rune := rune((*cont)[linep+x])
+			rune := rune(linep[x])
 			termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
 		}
 	}

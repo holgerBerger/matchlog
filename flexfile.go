@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"compress/gzip"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -24,6 +26,7 @@ func ReadFlexFile(filename string) (*FlexFileT, error) {
 	var (
 		newfile FlexFileT
 		err     error
+		reader  *bufio.Reader
 	)
 	newfile.filename = filename
 
@@ -31,11 +34,21 @@ func ReadFlexFile(filename string) (*FlexFileT, error) {
 	if err != nil {
 		return &newfile, err
 	}
-	reader := bufio.NewReader(osfile)
 
 	newfile.location, err = time.LoadLocation("Europe/Berlin")
 	if err != nil {
 		panic("could not load timezone")
+	}
+
+	if strings.HasSuffix(filename, ".gz") {
+		newreader, err := gzip.NewReader(osfile)
+		if err != nil {
+			reader = bufio.NewReader(osfile)
+		} else {
+			reader = bufio.NewReader(newreader)
+		}
+	} else {
+		reader = bufio.NewReader(osfile)
 	}
 
 	newfile.lines = make([][]byte, 0, 1024)

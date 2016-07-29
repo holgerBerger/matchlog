@@ -5,9 +5,9 @@ import "testing"
 // TestAddFile tests if files are sorted correctly
 func TestAddFile(t *testing.T) {
 
-	file1, _ := ReadFile("testdata/log1")
-	file2, _ := ReadFile("testdata/log1_b")
-	file3, _ := ReadFile("testdata/log2")
+	file1, _ := ReadFlexFile("testdata/log1")
+	file2, _ := ReadFlexFile("testdata/log1_b")
+	file3, _ := ReadFlexFile("testdata/log2")
 
 	buffer := NewBuffer()
 
@@ -16,7 +16,12 @@ func TestAddFile(t *testing.T) {
 	buffer.addFile(file3)
 	buffer.sortFile()
 
-	if buffer.lineps[2] != 135 || buffer.lineps[3] != 0 {
+	/*
+		println(len(buffer.lineps[0]))
+		println(len(buffer.lineps[1]))
+	*/
+
+	if len(buffer.lineps[0]) != 45 || len(buffer.lineps[1]) != 135 {
 		t.Fail()
 	}
 

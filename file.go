@@ -1,5 +1,8 @@
 package main
 
+// old file class, no longer used, coudl not read compressed files
+// can be removed when everything is transfered to line based memory format
+
 import (
 	"io/ioutil"
 	"regexp"

@@ -7,19 +7,17 @@ import "time"
 // BufferT represents the buffer as shown on the screen, so the aggregation of files sorted for time
 // and filtered
 type BufferT struct {
-	linecount int       // total number of lines
-	lineps    []int     // array of pointers to start of lines of aggregation of files
-	contps    []*[]byte // array of pointers to start of contents, for each line of Buffer
-	files     []*FileT  // list of files added to the buffer
-	rules     RulesT    // color rules to apply
+	linecount int          // total number of lines
+	lineps    [][]byte     // array of pointers to start of lines of aggregation of files
+	files     []*FlexFileT // list of files added to the buffer
+	rules     RulesT       // color rules to apply
 	// filters []FilterT // list of filters added to the buffer
 }
 
 // NewBuffer allocates an empty new buffer
 func NewBuffer() *BufferT {
 	var buffer BufferT
-	// buffer.lineps = make([]int, 0, 1024)
-	buffer.files = make([]*FileT, 0, 10)
+	buffer.files = make([]*FlexFileT, 0, 10)
 	buffer.rules = DefaultRules()
 	return &buffer
 }
@@ -28,7 +26,7 @@ func NewBuffer() *BufferT {
 // FIXME this works with pointers in original buffers, this could be changed to a copy,
 // which would be nice in case filters like "resolv IP addresses" are changing the buffer,
 // so one could have a copy and therefor by able to undo the filtering
-func (b *BufferT) addFile(f *FileT) {
+func (b *BufferT) addFile(f *FlexFileT) {
 
 	// append file to files if not yet in
 	found := false
@@ -42,8 +40,7 @@ func (b *BufferT) addFile(f *FileT) {
 	}
 
 	// make space for new file
-	b.lineps = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
-	b.contps = make([]*[]byte, b.linecount+f.linecount, b.linecount+f.linecount)
+	b.lineps = make([][]byte, b.linecount+f.linecount, b.linecount+f.linecount)
 	b.linecount += f.linecount
 
 }
@@ -71,7 +68,6 @@ func (b *BufferT) sortFile() {
 			}
 		}
 		b.lineps[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
-		b.contps[lnr] = &b.files[smallestfile].contents
 		filelinecounter[smallestfile]++
 	}
 

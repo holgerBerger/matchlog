@@ -8,6 +8,10 @@ func TestFlexFile(t *testing.T) {
 	if file.linecount != 3 || len(file.lines) != 4 {
 		t.Fail()
 	}
+	file, _ = ReadFlexFile("testdata/testfile.gz")
+	if file.linecount != 3 || len(file.lines) != 4 || file.filename != "testdata/testfile.gz" {
+		t.Fail()
+	}
 	//fmt.Println(string(file.lines[0]))
 }
 
