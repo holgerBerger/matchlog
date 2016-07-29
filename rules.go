@@ -6,21 +6,35 @@ import (
 	termbox "github.com/nsf/termbox-go"
 )
 
+// RulesT is list of rules
+type RulesT []*RuleT
+
+// DefaultRules creates a slice with some usefull rules
+func DefaultRules() RulesT {
+	rules := []*RuleT{
+		NewRuleNoerr(".*(?i)error|fail|offline|not found|unable|cannot|no.*found.*", termbox.ColorRed),
+		NewRuleNoerr(".*(?i)warn.*", termbox.ColorYellow),
+		NewRuleNoerr(".*(?i)ok|success.*", termbox.ColorGreen),
+	}
+	return rules
+}
+
+// Match checks all rules and returns first match
+func (r *RulesT) Match(buffer []byte) termbox.Attribute {
+	for _, rule := range *r {
+		t := rule.Match(buffer)
+		if t != termbox.ColorDefault {
+			return t
+		}
+	}
+	return termbox.ColorDefault
+}
+
 // RuleT describes color rules
 type RuleT struct {
 	re    string            // re to match the line against
 	regex *regexp.Regexp    // compiled regexp
 	color termbox.Attribute // color to mark a match
-}
-
-// DefaultRules creates a slice with some usefull rules
-func DefaultRules() *[]*RuleT {
-	rules := []*RuleT{
-		NewRuleNoerr(".*(?i)error|fail.*", termbox.ColorRed),
-		NewRuleNoerr(".*(?i)warn.*", termbox.ColorYellow),
-		NewRuleNoerr(".*(?i)ok|success.*", termbox.ColorGreen),
-	}
-	return &rules
 }
 
 // NewRule returns a Rule object with the compiled regex

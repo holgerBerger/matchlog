@@ -11,15 +11,16 @@ type BufferT struct {
 	lineps    []int     // array of pointers to start of lines of aggregation of files
 	contps    []*[]byte // array of pointers to start of contents, for each line of Buffer
 	files     []*FileT  // list of files added to the buffer
+	rules     RulesT    // color rules to apply
 	// filters []FilterT // list of filters added to the buffer
-	rules []*RuleT // color rules to apply
 }
 
 // NewBuffer allocates an empty new buffer
 func NewBuffer() *BufferT {
 	var buffer BufferT
-	buffer.lineps = make([]int, 0, 1024)
+	// buffer.lineps = make([]int, 0, 1024)
 	buffer.files = make([]*FileT, 0, 10)
+	buffer.rules = DefaultRules()
 	return &buffer
 }
 
