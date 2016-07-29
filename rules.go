@@ -12,9 +12,9 @@ type RulesT []*RuleT
 // DefaultRules creates a slice with some usefull rules
 func DefaultRules() RulesT {
 	rules := []*RuleT{
-		NewRuleNoerr(".*(?i)error|fail|offline|not found|unable|cannot|no.*found.*", termbox.ColorRed),
+		NewRuleNoerr(".*(?i)error|fail|offline|unable|cannot|no.*found.*", termbox.ColorRed),
 		NewRuleNoerr(".*(?i)warn.*", termbox.ColorYellow),
-		NewRuleNoerr(".*(?i)ok|success.*", termbox.ColorGreen),
+		NewRuleNoerr(".*(?i) ok|ok |success.*", termbox.ColorGreen),
 	}
 	return rules
 }

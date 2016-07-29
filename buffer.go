@@ -23,9 +23,6 @@ func NewBuffer() *BufferT {
 }
 
 // addFile adds a already loaded file to the buffer, here sorting and filtering takes place
-// FIXME this works with pointers in original buffers, this could be changed to a copy,
-// which would be nice in case filters like "resolv IP addresses" are changing the buffer,
-// so one could have a copy and therefor by able to undo the filtering
 func (b *BufferT) addFile(f *FlexFileT) {
 
 	// append file to files if not yet in
