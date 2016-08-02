@@ -1,5 +1,13 @@
 package main
 
+/*
+
+	screen and keyboard handling
+	using termbox, which is redrawing all screen, but simple,
+	ncurses would probably need less display bandwidth
+
+*/
+
 import (
 	"time"
 
@@ -91,7 +99,7 @@ loop:
 
 		default:
 			s.draw()
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 		}
 	}
 

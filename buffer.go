@@ -1,5 +1,10 @@
 package main
 
+/*
+	assenmble the consolidated buffer of all loaded files,
+	this is the sorted data being displayed
+*/
+
 import "time"
 
 // FIXME buffer should may be hold runes and not bytes? UTF files needs testing

@@ -1,5 +1,11 @@
 package main
 
+/*
+	main programm
+	command line handling, init and passing control to
+	screen event loop
+*/
+
 import (
 	"os"
 
