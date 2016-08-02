@@ -3,8 +3,9 @@ package main
 /*
 
 	screen and keyboard handling
-	using termbox, which is redrawing all screen, but simple,
+	using termbox, which is redrawing all screen but simple,
 	ncurses would probably need less display bandwidth
+	cpu usage minimalized, only redrawing after events
 
 	(c) Holger Berger 2016, under GPL
 */
@@ -104,7 +105,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 func (s *Screen) eventLoop() {
 	eventQueue := make(chan termbox.Event, 1)
 	exitQueue := make(chan bool, 1)
-	// handle events likle keypress and resize
+	// handle events like keypress and resize
 	go s.eventHandler(eventQueue, exitQueue)
 
 	// catch events and send to event handler
