@@ -158,7 +158,13 @@ func (s *Screen) draw() {
 				break
 			}
 			rune := rune(linep[x+s.offsetx])
-			termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
+			if x+s.offsetx >= s.buffer.hostsstart[y+s.offsety] &&
+				x+s.offsetx < s.buffer.hostsend[y+s.offsety] {
+				hostname := string(linep[s.buffer.hostsstart[y+s.offsety]:s.buffer.hostsend[y+s.offsety]])
+				termbox.SetCell(x, y, rune, s.buffer.hostcolors[hostname], termbox.ColorDefault)
+			} else {
+				termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
+			}
 		}
 	}
 

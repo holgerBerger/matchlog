@@ -7,17 +7,25 @@ package main
 	(c) Holger Berger 2016, under GPL
 */
 
-import "time"
+import (
+	"time"
+
+	termbox "github.com/nsf/termbox-go"
+)
 
 // FIXME buffer should may be hold runes and not bytes? UTF files needs testing
 
 // BufferT represents the buffer as shown on the screen, so the aggregation of files sorted for time
 // and filtered
 type BufferT struct {
-	linecount int          // total number of lines
-	lineps    [][]byte     // array of pointers to start of lines of aggregation of files
-	files     []*FlexFileT // list of files added to the buffer
-	rules     RulesT       // color rules to apply
+	linecount  int                          // total number of lines
+	lineps     [][]byte                     // array if lines
+	hostsstart []int                        // start if hostname in line
+	hostsend   []int                        // end of hostname in line
+	files      []*FlexFileT                 // list of files added to the buffer
+	rules      RulesT                       // color rules to apply
+	hostcolors map[string]termbox.Attribute // slice with hostnames
+	maxcolor   termbox.Attribute
 	// filters []FilterT // list of filters added to the buffer
 }
 
@@ -26,6 +34,8 @@ func NewBuffer() *BufferT {
 	var buffer BufferT
 	buffer.files = make([]*FlexFileT, 0, 10)
 	buffer.rules = DefaultRules()
+	buffer.hostcolors = make(map[string]termbox.Attribute)
+	buffer.maxcolor = 17
 	return &buffer
 }
 
@@ -41,11 +51,24 @@ func (b *BufferT) addFile(f *FlexFileT) {
 	}
 	if !found {
 		b.files = append(b.files, f)
-	}
 
-	// make space for new file
-	b.lineps = make([][]byte, b.linecount+f.linecount, b.linecount+f.linecount)
-	b.linecount += f.linecount
+		// make space for new file
+		b.lineps = make([][]byte, b.linecount+f.linecount, b.linecount+f.linecount)
+		b.hostsstart = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
+		b.hostsend = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
+		b.linecount += f.linecount
+
+		for _, hostname := range f.hosts {
+			_, ok := b.hostcolors[hostname]
+			if !ok {
+				b.maxcolor += 5
+				if b.maxcolor > 232 {
+					b.maxcolor = 20 // we wrap around before grey values
+				}
+				b.hostcolors[hostname] = b.maxcolor
+			}
+		}
+	}
 
 }
 
@@ -72,6 +95,8 @@ func (b *BufferT) sortFile() {
 			}
 		}
 		b.lineps[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
+		b.hostsstart[lnr] = b.files[smallestfile].hostsstart[filelinecounter[smallestfile]]
+		b.hostsend[lnr] = b.files[smallestfile].hostsend[filelinecounter[smallestfile]]
 		filelinecounter[smallestfile]++
 	}
 
