@@ -3,6 +3,8 @@ package main
 /*
 	rule handling, here is the regular expressions determining color
 	of a line to be displayed
+
+	(c) Holger Berger 2016, under GPL
 */
 
 import (

@@ -3,6 +3,8 @@ package main
 /*
 	read and pares plaintext and compressed files (.gz)
 	date string parsing happens here
+
+	(c) Holger Berger 2016, under GPL
 */
 
 import (

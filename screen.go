@@ -6,6 +6,7 @@ package main
 	using termbox, which is redrawing all screen, but simple,
 	ncurses would probably need less display bandwidth
 
+	(c) Holger Berger 2016, under GPL
 */
 
 import (

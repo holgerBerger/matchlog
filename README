@@ -1,0 +1,18 @@
+MATCHLOG
+========
+
+a simple log file viewer, which displays all files specified on command line
+sorted by time in one buffer, using different colors for lines with errors,
+warning or success messages.
+
+TODO
+----
+
+* coloring of hosts field, each host gets a different color
+* IP address resolution with a provided hosts file
+* hotkey to show/hide lines from certain files/hosts
+* hotkey for search
+* hotkey to mark lines for a second buffer which can be displayed as alternative
+  to main buffer
+* hotkey to add regular expressions for line coloring
+* config file to add regular expressions for line coloring

@@ -1,5 +1,7 @@
 package main
 
+// (c) Holger Berger 2016, under GPL
+
 import "testing"
 
 // TestAddFile tests if files are sorted correctly

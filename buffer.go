@@ -3,6 +3,8 @@ package main
 /*
 	assenmble the consolidated buffer of all loaded files,
 	this is the sorted data being displayed
+
+	(c) Holger Berger 2016, under GPL
 */
 
 import "time"

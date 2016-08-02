@@ -4,6 +4,8 @@ package main
 	main programm
 	command line handling, init and passing control to
 	screen event loop
+
+	(c) Holger Berger 2016, under GPL
 */
 
 import (

@@ -1,5 +1,7 @@
 package main
 
+// (c) Holger Berger 2016, under GPL
+
 import "testing"
 
 // TestFile is testing File Reading and indexing
