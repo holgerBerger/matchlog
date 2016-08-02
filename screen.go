@@ -10,7 +10,7 @@ package main
 */
 
 import (
-	"time"
+	"sync"
 
 	termbox "github.com/nsf/termbox-go"
 )
@@ -22,6 +22,7 @@ type Screen struct {
 	buffer  *BufferT     // buffer to be shown
 	offsety int          // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
 	offsetx int
+	lock    sync.Mutex
 }
 
 // NewScreen inits termbox
@@ -46,23 +47,14 @@ func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
 	return newscreen
 }
 
-// eventLoop will not return unless program is ended
-func (s *Screen) eventLoop() {
-	eventQueue := make(chan termbox.Event)
-	go func() {
-		for {
-			eventQueue <- termbox.PollEvent()
-		}
-	}()
+// eventHandler catches events and changes state
+func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool) {
 
-	s.draw()
-
-loop:
 	for {
 		select {
 		case ev := <-eventQueue:
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyEsc || ev.Ch == 'q') {
-				break loop
+				exitQueue <- true
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowDown {
 				if s.offsety < s.buffer.linecount-s.h {
@@ -98,21 +90,52 @@ loop:
 				}
 			}
 
-		default:
+			if ev.Type == termbox.EventResize {
+				s.w, s.h = termbox.Size()
+			}
+
+			// something happened, so redraw screen
 			s.draw()
-			time.Sleep(1 * time.Millisecond)
 		}
 	}
+}
 
+// eventLoop will not return unless program is ended
+func (s *Screen) eventLoop() {
+	eventQueue := make(chan termbox.Event, 1)
+	exitQueue := make(chan bool, 1)
+	// handle events likle keypress and resize
+	go s.eventHandler(eventQueue, exitQueue)
+
+	// catch events and send to event handler
+	go func() {
+		for {
+			eventQueue <- termbox.PollEvent()
+		}
+	}()
+
+	// inital draw
+	s.draw()
+
+	// endless loop, waiting for end event
+loop:
+	for {
+		select {
+		case <-exitQueue:
+			break loop
+		}
+	}
 }
 
 // draw paints whatever is needed
 func (s *Screen) draw() {
+	// as we use go routines, we need a lock here,
+	// to avoid a redraw triggered by goroutine to interfere
+	// with another, and we protect termbox.Flush at the same time
+	s.lock.Lock()
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	s.w, s.h = termbox.Size()
 
-	// FIXME how to deal with long lines > w ?
 	for y := 0; y < s.h; y++ {
 		if y+s.offsety >= s.buffer.linecount {
 			break
@@ -140,5 +163,5 @@ func (s *Screen) draw() {
 
 	// full redraw
 	termbox.Flush()
-
+	s.lock.Unlock()
 }
