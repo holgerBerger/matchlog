@@ -8,10 +8,11 @@ import (
 
 // Screen class to keep state of termbox
 type Screen struct {
-	w, h   int          // screensize
-	files  []*FlexFileT // list of files
-	buffer *BufferT     // buffer to be shown
-	offset int          // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
+	w, h    int          // screensize
+	files   []*FlexFileT // list of files
+	buffer  *BufferT     // buffer to be shown
+	offsety int          // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
+	offsetx int
 }
 
 // NewScreen inits termbox
@@ -19,7 +20,8 @@ func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
 	newscreen := new(Screen)
 	newscreen.files = files
 	newscreen.buffer = buffer
-	newscreen.offset = 0
+	newscreen.offsety = 0
+	newscreen.offsetx = 0
 
 	// init termbox
 	err := termbox.Init()
@@ -29,6 +31,7 @@ func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
 	// defer termbox.Close()
 
 	newscreen.w, newscreen.h = termbox.Size()
+	termbox.SetOutputMode(termbox.Output256)
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
 	return newscreen
@@ -53,29 +56,39 @@ loop:
 				break loop
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowDown {
-				if s.offset < s.buffer.linecount-s.h {
-					s.offset++
+				if s.offsety < s.buffer.linecount-s.h {
+					s.offsety++
 				}
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowUp {
-				if s.offset > 0 {
-					s.offset--
+				if s.offsety > 0 {
+					s.offsety--
 				}
 			}
 			if ev.Type == termbox.EventKey && (ev.Key == termbox.KeyPgdn || ev.Key == termbox.KeySpace) {
-				if s.offset < s.buffer.linecount-s.h {
-					s.offset += s.h
+				if s.offsety < s.buffer.linecount-s.h {
+					s.offsety += s.h
 				} else {
-					s.offset = s.buffer.linecount - s.h
+					s.offsety = s.buffer.linecount - s.h
 				}
 			}
 			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyPgup {
-				if s.offset-s.h > 0 {
-					s.offset -= s.h
+				if s.offsety-s.h > 0 {
+					s.offsety -= s.h
 				} else {
-					s.offset = 0
+					s.offsety = 0
 				}
 			}
+
+			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowRight {
+				s.offsetx++
+			}
+			if ev.Type == termbox.EventKey && ev.Key == termbox.KeyArrowLeft {
+				if s.offsetx > 0 {
+					s.offsetx--
+				}
+			}
+
 		default:
 			s.draw()
 			time.Sleep(10 * time.Millisecond)
@@ -92,15 +105,15 @@ func (s *Screen) draw() {
 
 	// FIXME how to deal with long lines > w ?
 	for y := 0; y < s.h; y++ {
-		if y+s.offset >= s.buffer.linecount {
+		if y+s.offsety >= s.buffer.linecount {
 			break
 		}
 
-		linep := s.buffer.lineps[y+s.offset]
+		linep := s.buffer.lineps[y+s.offsety]
 		var color termbox.Attribute
 
 		// if line is not empty, match the line
-		if len(s.buffer.lineps[y+s.offset]) > 0 {
+		if len(s.buffer.lineps[y+s.offsety]) > 0 {
 			color = s.buffer.rules.Match(linep)
 		} else {
 			color = termbox.ColorDefault
@@ -108,10 +121,10 @@ func (s *Screen) draw() {
 
 		// render the line
 		for x := 0; x < s.w; x++ {
-			if linep[x] == '\n' {
+			if x+s.offsetx >= len(linep) || linep[x+s.offsetx] == '\n' {
 				break
 			}
-			rune := rune(linep[x])
+			rune := rune(linep[x+s.offsetx])
 			termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
 		}
 	}

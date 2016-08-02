@@ -76,7 +76,7 @@ func ReadFlexFile(filename string) (*FlexFileT, error) {
 func (f *FlexFileT) parseLines() {
 
 	// Jul 24 06:29:28
-	fmt1, _ := regexp.Compile(`[a-zA-Z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}`)
+	fmt1, _ := regexp.Compile(`[a-zA-Z]{3}\s+[0-9]+ [0-9]{2}:[0-9]{2}:[0-9]{2}`)
 	// 2016-07-26T00:36:17.903571+02:00
 	fmt2, _ := regexp.Compile(`([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})\.[0-9]+(\+[0-9]{2}):([0-9]{2})`)
 
