@@ -91,6 +91,15 @@ func (f *FlexFileT) parseLines() {
 			if err == nil {
 				f.times[line] = t
 				continue
+			} else {
+				t, err := time.ParseInLocation("2006 Jan  2 15:04:05", "2016 "+string(match1), f.location)
+				if err == nil {
+					f.times[line] = t
+					continue
+				} else {
+					// FIXME wtf do we do here?
+					panic("could not parse date" + string(match1))
+				}
 			}
 		} else {
 			match2 := fmt2.FindSubmatch(datestr)

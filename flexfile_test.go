@@ -27,4 +27,11 @@ func TestFlexParse(t *testing.T) {
 		file.times[1].String() != "2016-07-26 01:24:00 +0200 CEST" {
 		t.Fail()
 	}
+
+	file, _ = ReadFlexFile("testdata/log3")
+	if file.times[0].String() != "2016-08-02 19:54:09 +0200 CEST" ||
+		file.times[1].String() != "2016-08-02 19:55:47 +0200 CEST" {
+		t.Fail()
+	}
+
 }
