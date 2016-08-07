@@ -7,11 +7,12 @@ warning or success messages.
 Different source hosts have different colors.
 So far two date formats can be parsed, as they are used on ubuntu and redhat 6.
 Further formats might needed to be added.
+With --hosts one can specify a comma separated list of hosts files,
+which is used to resolve IPv4 address in the logfiles to hostname.
 
 TODO
 ----
 
-* IP address resolution with a provided hosts file
 * hotkey to show/hide lines from certain files/hosts
 * hotkey for search
 * hotkey to mark lines for a second buffer which can be displayed as alternative
