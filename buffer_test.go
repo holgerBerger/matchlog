@@ -23,7 +23,7 @@ func TestAddFile(t *testing.T) {
 		println(len(buffer.lineps[1]))
 	*/
 
-	if len(buffer.lineps[0]) != 45 || len(buffer.lineps[1]) != 135 {
+	if len(buffer.lines[0].line) != 45 || len(buffer.lines[1].line) != 135 {
 		t.Fail()
 	}
 

@@ -19,9 +19,7 @@ import (
 // and filtered
 type BufferT struct {
 	linecount  int                          // total number of lines
-	lineps     [][]byte                     // array if lines
-	hostsstart []int                        // start if hostname in line
-	hostsend   []int                        // end of hostname in line
+	lines      []LineT                      // line data
 	files      []*FlexFileT                 // list of files added to the buffer
 	rules      RulesT                       // color rules to apply
 	hostcolors map[string]termbox.Attribute // slice with hostnames
@@ -53,12 +51,11 @@ func (b *BufferT) addFile(f *FlexFileT) {
 		b.files = append(b.files, f)
 
 		// make space for new file
-		b.lineps = make([][]byte, b.linecount+f.linecount, b.linecount+f.linecount)
-		b.hostsstart = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
-		b.hostsend = make([]int, b.linecount+f.linecount, b.linecount+f.linecount)
+		b.lines = make([]LineT, b.linecount+f.linecount, b.linecount+f.linecount)
 		b.linecount += f.linecount
 
-		for _, hostname := range f.hosts {
+		for _, line := range f.lines {
+			hostname := line.host
 			_, ok := b.hostcolors[hostname]
 			if !ok {
 				b.maxcolor += 5
@@ -88,15 +85,13 @@ func (b *BufferT) sortFile() {
 		smallestfile := -1
 		for file := range b.files {
 			if filelinecounter[file] < b.files[file].linecount {
-				if b.files[file].times[filelinecounter[file]].Before(smallest) {
-					smallest = b.files[file].times[filelinecounter[file]]
+				if b.files[file].lines[filelinecounter[file]].time.Before(smallest) {
+					smallest = b.files[file].lines[filelinecounter[file]].time
 					smallestfile = file
 				}
 			}
 		}
-		b.lineps[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
-		b.hostsstart[lnr] = b.files[smallestfile].hostsstart[filelinecounter[smallestfile]]
-		b.hostsend[lnr] = b.files[smallestfile].hostsend[filelinecounter[smallestfile]]
+		b.lines[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
 		filelinecounter[smallestfile]++
 	}
 

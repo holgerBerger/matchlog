@@ -142,11 +142,11 @@ func (s *Screen) draw() {
 			break
 		}
 
-		linep := s.buffer.lineps[y+s.offsety]
+		linep := s.buffer.lines[y+s.offsety].line
 		var color termbox.Attribute
 
 		// if line is not empty, match the line
-		if len(s.buffer.lineps[y+s.offsety]) > 0 {
+		if len(s.buffer.lines[y+s.offsety].line) > 0 {
 			color = s.buffer.rules.Match(linep)
 		} else {
 			color = termbox.ColorDefault
@@ -158,9 +158,9 @@ func (s *Screen) draw() {
 				break
 			}
 			rune := rune(linep[x+s.offsetx])
-			if x+s.offsetx >= s.buffer.hostsstart[y+s.offsety] &&
-				x+s.offsetx < s.buffer.hostsend[y+s.offsety] {
-				hostname := string(linep[s.buffer.hostsstart[y+s.offsety]:s.buffer.hostsend[y+s.offsety]])
+			if x+s.offsetx >= s.buffer.lines[y+s.offsety].hoststart &&
+				x+s.offsetx < s.buffer.lines[y+s.offsety].hostend {
+				hostname := string(linep[s.buffer.lines[y+s.offsety].hoststart:s.buffer.lines[y+s.offsety].hostend])
 				termbox.SetCell(x, y, rune, s.buffer.hostcolors[hostname], termbox.ColorDefault)
 			} else {
 				termbox.SetCell(x, y, rune, color, termbox.ColorDefault)

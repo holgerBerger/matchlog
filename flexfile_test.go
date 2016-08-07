@@ -20,25 +20,25 @@ func TestFlexFile(t *testing.T) {
 // TestParse checks date parsing
 func TestFlexParse(t *testing.T) {
 	file, _ := ReadFlexFile("testdata/log1")
-	if file.times[0].String() != "2016-07-24 06:29:28 +0200 CEST" {
+	if file.lines[0].time.String() != "2016-07-24 06:29:28 +0200 CEST" {
 		t.Fail()
 	}
 
 	file, _ = ReadFlexFile("testdata/log2")
 
-	if file.times[0].String() != "2016-07-26 00:36:17 +0200 CEST" ||
-		file.times[1].String() != "2016-07-26 01:24:00 +0200 CEST" ||
-		file.hosts[0] != "al2oss1" || file.hostsstart[0] != 33 ||
-		file.hostsend[0] != 40 {
+	if file.lines[0].time.String() != "2016-07-26 00:36:17 +0200 CEST" ||
+		file.lines[1].time.String() != "2016-07-26 01:24:00 +0200 CEST" ||
+		file.lines[0].host != "al2oss1" || file.lines[0].hoststart != 33 ||
+		file.lines[0].hostend != 40 {
 		t.Fail()
 	}
 
 	file, _ = ReadFlexFile("testdata/log3")
 
-	if file.times[0].String() != "2016-08-02 19:54:09 +0200 CEST" ||
-		file.times[1].String() != "2016-08-02 19:55:47 +0200 CEST" ||
-		file.hosts[0] != "derwat" || file.hostsstart[0] != 16 ||
-		file.hostsend[0] != 22 {
+	if file.lines[0].time.String() != "2016-08-02 19:54:09 +0200 CEST" ||
+		file.lines[1].time.String() != "2016-08-02 19:55:47 +0200 CEST" ||
+		file.lines[0].host != "derwat" || file.lines[0].hoststart != 16 ||
+		file.lines[0].hostend != 22 {
 		t.Fail()
 	}
 
