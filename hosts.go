@@ -40,7 +40,7 @@ func (h *HostsT) AddFile(filename string) {
 		}
 
 		ip := f[0]
-		h.ip2name[ip] = f[1]
+		h.ip2name[ip] = strings.Trim(f[1], " \t\n")
 
 	}
 }

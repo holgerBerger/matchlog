@@ -10,12 +10,34 @@ package main
 
 import (
 	"os"
+	"strings"
 
+	"github.com/jessevdk/go-flags"
 	termbox "github.com/nsf/termbox-go"
 )
 
+var opts struct {
+	Hosts string `long:"hosts" description:"hosts files to load, comma seperated"`
+}
+
 // main programm, reading arguments
 func main() {
+	var hosts *HostsT
+
+	// parse commandlines for --hosts option
+	_, err := flags.Parse(&opts)
+	if err != nil {
+		os.Exit(0)
+	}
+
+	if opts.Hosts != "" {
+		hosts = NewHosts()
+		for _, hf := range strings.Split(opts.Hosts, ",") {
+			hosts.AddFile(hf)
+		}
+	} else {
+		hosts = nil
+	}
 
 	// files holds list of files
 	var files []*FlexFileT
@@ -30,6 +52,7 @@ func main() {
 
 	// create the buffer aggregating the files
 	buffer := NewBuffer()
+	buffer.AddHosts(hosts)
 
 	// add all files to buffer
 	for f := range files {

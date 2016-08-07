@@ -8,6 +8,8 @@ package main
 */
 
 import (
+	"bytes"
+	"regexp"
 	"time"
 
 	termbox "github.com/nsf/termbox-go"
@@ -23,7 +25,8 @@ type BufferT struct {
 	files      []*FlexFileT                 // list of files added to the buffer
 	rules      RulesT                       // color rules to apply
 	hostcolors map[string]termbox.Attribute // slice with hostnames
-	maxcolor   termbox.Attribute
+	maxcolor   termbox.Attribute            // color for hosts
+	hosts      *HostsT                      // hostfiles for IP to hostname mapping
 	// filters []FilterT // list of filters added to the buffer
 }
 
@@ -71,7 +74,8 @@ func (b *BufferT) addFile(f *FlexFileT) {
 
 // sortFile has to be called after all files have been added with addFile
 func (b *BufferT) sortFile() {
-	// add file to buffer sorted by time
+
+	regex, _ := regexp.Compile(`([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`)
 
 	// first init some file-local linecounter
 	filelinecounter := make([]int, len(b.files), len(b.files))
@@ -91,8 +95,29 @@ func (b *BufferT) sortFile() {
 				}
 			}
 		}
+
+		// copy line to buffer
 		b.lines[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
+
+		// if we have a hosts file loaded, check for IP addresses
+		if b.hosts != nil {
+			match := regex.FindSubmatch(b.lines[lnr].line)
+			if match != nil {
+				// fmt.Println(string(match[1]))
+				ipname, ok := b.hosts.ip2name[string(match[1])]
+				if ok {
+					b.lines[lnr].line = bytes.Replace(b.lines[lnr].line, match[1], []byte(ipname), -1)
+					// fmt.Println(string(bytes.Replace(b.lines[lnr].line, match[1], []byte(ipname), -1)))
+				}
+			}
+		}
+
 		filelinecounter[smallestfile]++
 	}
 
+}
+
+// AddHosts adds already loaded hostfiles to buffer
+func (b *BufferT) AddHosts(hosts *HostsT) {
+	b.hosts = hosts
 }
