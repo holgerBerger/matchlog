@@ -14,7 +14,6 @@ TODO
 ----
 
 * hotkey to show/hide lines from certain files/hosts
-* hotkey for search
 * hotkey to mark lines for a second buffer which can be displayed as alternative
   to main buffer
 * hotkey to add regular expressions for line coloring
