@@ -40,7 +40,8 @@ func NewBuffer() *BufferT {
 	return &buffer
 }
 
-// addFile adds a already loaded file to the buffer, here sorting and filtering takes place
+// addFile adds a already loaded file to the buffer, host coloring is here
+// but the data is not joined into the buffer, call sortFile to do this
 func (b *BufferT) addFile(f *FlexFileT) {
 
 	// append file to files if not yet in
@@ -96,18 +97,21 @@ func (b *BufferT) sortFile() {
 			}
 		}
 
-		// copy line to buffer
-		b.lines[lnr] = b.files[smallestfile].lines[filelinecounter[smallestfile]]
+		// copy line to buffer, unifying time format
+		origline := b.files[smallestfile].lines[filelinecounter[smallestfile]]
+		origline.line = append([]byte(origline.time.Format("Mon Jan 02 15:04:05 ")), origline.line[origline.hoststart:]...)
+		// correct the location of the hostname in the line
+		origline.hostend -= origline.hoststart - 20 // 20 is the length of time format
+		origline.hoststart = 20
+		b.lines[lnr] = origline
 
 		// if we have a hosts file loaded, check for IP addresses
 		if b.hosts != nil {
 			match := regex.FindSubmatch(b.lines[lnr].line)
 			if match != nil {
-				// fmt.Println(string(match[1]))
 				ipname, ok := b.hosts.ip2name[string(match[1])]
 				if ok {
 					b.lines[lnr].line = bytes.Replace(b.lines[lnr].line, match[1], []byte(ipname), -1)
-					// fmt.Println(string(bytes.Replace(b.lines[lnr].line, match[1], []byte(ipname), -1)))
 				}
 			}
 		}
@@ -117,7 +121,7 @@ func (b *BufferT) sortFile() {
 
 }
 
-// AddHosts adds already loaded hostfiles to buffer
+// AddHosts adds already loaded hostfiles to buffer, will be used for IP replacement
 func (b *BufferT) AddHosts(hosts *HostsT) {
 	b.hosts = hosts
 }
