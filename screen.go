@@ -11,8 +11,8 @@ package main
 */
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 	"sync"
 
 	termbox "github.com/nsf/termbox-go"
@@ -86,7 +86,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 				if s.searchForward {
 					for lnr, currentline := range s.buffer.lines[s.offsety+1:] {
 						// FIXME case insensitive search?!?!
-						if strings.Index(string(currentline.line), s.searchString) > 0 {
+						if bytes.Index(currentline.line, []byte(s.searchString)) > 0 {
 							s.offsety += lnr + 1
 							break
 						}
@@ -96,7 +96,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 					for lnr := s.offsety - 1; lnr >= 0; lnr-- {
 						// FIXME case insensitive search?!?!
 						currentline := s.buffer.lines[lnr]
-						if strings.Index(string(currentline.line), s.searchString) > 0 {
+						if bytes.Index(currentline.line, []byte(s.searchString)) > 0 {
 							s.offsety = lnr
 							break
 						}
@@ -253,6 +253,14 @@ func (s *Screen) draw() {
 			color = termbox.ColorDefault
 		}
 
+		// search highlight handling
+		var hitpos int
+		if s.searchString != "" {
+			hitpos = bytes.Index(linep, []byte(s.searchString))
+		} else {
+			hitpos = -1
+		}
+
 		// render the line
 		for x := 0; x < s.w; x++ {
 			if x+s.offsetx >= len(linep) || linep[x+s.offsetx] == '\n' {
@@ -264,7 +272,12 @@ func (s *Screen) draw() {
 				hostname := string(linep[s.buffer.lines[y+s.offsety].hoststart:s.buffer.lines[y+s.offsety].hostend])
 				termbox.SetCell(x, y, rune, s.buffer.hostcolors[hostname], termbox.ColorDefault)
 			} else {
-				termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
+				// highlight reverse + magenta the current searchstring
+				if hitpos > 0 && x+s.offsetx >= hitpos && x+s.offsetx < hitpos+len(s.searchString) {
+					termbox.SetCell(x, y, rune, termbox.ColorMagenta+termbox.AttrReverse, termbox.ColorDefault)
+				} else {
+					termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
+				}
 			}
 		}
 	}
