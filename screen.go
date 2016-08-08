@@ -115,7 +115,17 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 			}
 
 			if s.searchInput && ev.Type == termbox.EventKey {
-				s.searchString = s.searchString + string(ev.Ch)
+				if ev.Key != termbox.KeyArrowDown &&
+					ev.Key != termbox.KeyArrowUp &&
+					ev.Key != termbox.KeyArrowRight &&
+					ev.Key != termbox.KeyArrowLeft {
+					s.searchString = s.searchString + string(ev.Ch)
+				}
+				if ev.Key == termbox.KeyEsc {
+					s.searchString = ""
+					s.searchInput = false
+					termbox.HideCursor()
+				}
 				s.draw()
 				break
 			}
@@ -265,7 +275,7 @@ func (s *Screen) draw() {
 	}
 
 	// ruler
-	ruler := int(float32(s.offsety) / float32(s.buffer.linecount) * 100.0)
+	ruler := int(float32(s.offsety) / float32(s.buffer.linecount-s.h) * 100.0)
 	rulerstring := fmt.Sprintf("%7d/%7d %3d%%", s.offsety, s.buffer.linecount, ruler)
 	for x := 0; x < len(rulerstring); x++ {
 		termbox.SetCell(s.w-22+x, s.h-1, rune(rulerstring[x]), termbox.ColorBlack|termbox.AttrReverse, termbox.ColorDefault)
