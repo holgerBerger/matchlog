@@ -11,29 +11,36 @@ package main
 */
 
 import (
-	"bytes"
 	"fmt"
+	"regexp"
 	"sync"
 
 	termbox "github.com/nsf/termbox-go"
 )
 
-// Screen class to keep state of termbox
-type Screen struct {
-	w, h          int          // screensize
-	files         []*FlexFileT // list of files
-	buffer        *BufferT     // buffer to be shown
-	offsety       int          // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
-	offsetx       int          // offset of first character in line to be shown
-	searchInput   bool         // flag if search input is ongoing
-	searchForward bool         // search direction, false = backward
-	searchString  string       // string to be searched
+// ScreenT class to keep state of termbox
+type ScreenT struct {
+	w, h          int            // screensize
+	files         []*FlexFileT   // list of files
+	buffer        *BufferT       // buffer to be shown
+	offsety       int            // offset of forst line into buffer = 0 top of file 1 = second line on top of screen
+	offsetx       int            // offset of first character in line to be shown
+	searchInput   bool           // flag if search input is ongoing
+	searchForward bool           // search direction, false = backward
+	searchString  string         // string to be searched
+	regex         *regexp.Regexp // regex created from searcgString
 	lock          sync.Mutex
 }
 
+// MatchT describes a match within a line, position + display color
+type MatchT struct {
+	start, end int
+	color      termbox.Attribute
+}
+
 // NewScreen inits termbox
-func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
-	newscreen := new(Screen)
+func NewScreen(files []*FlexFileT, buffer *BufferT) *ScreenT {
+	newscreen := new(ScreenT)
 	newscreen.files = files
 	newscreen.buffer = buffer
 	newscreen.offsety = 0
@@ -55,7 +62,7 @@ func NewScreen(files []*FlexFileT, buffer *BufferT) *Screen {
 }
 
 // eventHandler catches events and changes state
-func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool) {
+func (s *ScreenT) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool) {
 
 	for {
 		select {
@@ -86,7 +93,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 				if s.searchForward {
 					for lnr, currentline := range s.buffer.lines[s.offsety+1:] {
 						// FIXME case insensitive search?!?!
-						if bytes.Index(currentline.line, []byte(s.searchString)) > 0 {
+						if s.regex.FindAll(currentline.line, -1) != nil {
 							s.offsety += lnr + 1
 							break
 						}
@@ -96,7 +103,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 					for lnr := s.offsety - 1; lnr >= 0; lnr-- {
 						// FIXME case insensitive search?!?!
 						currentline := s.buffer.lines[lnr]
-						if bytes.Index(currentline.line, []byte(s.searchString)) > 0 {
+						if s.regex.FindAll(currentline.line, -1) != nil {
 							s.offsety = lnr
 							break
 						}
@@ -106,6 +113,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 				break
 			}
 
+			// delete last character from searchstring
 			if s.searchInput && ev.Type == termbox.EventKey && (ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2 || ev.Key == termbox.KeyDelete) {
 				if len(s.searchString) > 0 {
 					s.searchString = s.searchString[:len(s.searchString)-1]
@@ -114,12 +122,17 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 				break
 			}
 
+			// append character to searcgstring
 			if s.searchInput && ev.Type == termbox.EventKey {
 				if ev.Key != termbox.KeyArrowDown &&
 					ev.Key != termbox.KeyArrowUp &&
 					ev.Key != termbox.KeyArrowRight &&
 					ev.Key != termbox.KeyArrowLeft {
 					s.searchString = s.searchString + string(ev.Ch)
+					// update regex for search
+					if s.searchString != "" {
+						s.regex, _ = regexp.Compile(s.searchString)
+					}
 				}
 				if ev.Key == termbox.KeyEsc {
 					s.searchString = ""
@@ -203,7 +216,7 @@ func (s *Screen) eventHandler(eventQueue chan termbox.Event, exitQueue chan bool
 }
 
 // eventLoop will not return unless program is ended
-func (s *Screen) eventLoop() {
+func (s *ScreenT) eventLoop() {
 	eventQueue := make(chan termbox.Event, 1)
 	exitQueue := make(chan bool, 1)
 	// handle events like keypress and resize
@@ -230,7 +243,7 @@ loop:
 }
 
 // draw paints whatever is needed
-func (s *Screen) draw() {
+func (s *ScreenT) draw() {
 	// as we use go routines, we need a lock here,
 	// to avoid a redraw triggered by goroutine to interfere
 	// with another, and we protect termbox.Flush at the same time
@@ -238,10 +251,13 @@ func (s *Screen) draw() {
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
+	// loop over lines of display
 	for y := 0; y < s.h-1; y++ {
 		if y+s.offsety >= s.buffer.linecount {
 			break
 		}
+
+		matches := make([]MatchT, 0, 0)
 
 		linep := s.buffer.lines[y+s.offsety].line
 		var color termbox.Attribute
@@ -254,14 +270,15 @@ func (s *Screen) draw() {
 		}
 
 		// search highlight handling
-		var hitpos int
 		if s.searchString != "" {
-			hitpos = bytes.Index(linep, []byte(s.searchString))
-		} else {
-			hitpos = -1
+			// new code for regexp handling and multiple matches per line
+			index := s.regex.FindAllIndex(linep, -1)
+			for _, m := range index {
+				matches = append(matches, MatchT{m[0], m[1], termbox.ColorCyan + termbox.AttrReverse})
+			}
 		}
 
-		// render the line
+		// render the line, loop over columns
 		for x := 0; x < s.w; x++ {
 			if x+s.offsetx >= len(linep) || linep[x+s.offsetx] == '\n' {
 				break
@@ -272,26 +289,22 @@ func (s *Screen) draw() {
 				hostname := string(linep[s.buffer.lines[y+s.offsety].hoststart:s.buffer.lines[y+s.offsety].hostend])
 				termbox.SetCell(x, y, rune, s.buffer.hostcolors[hostname], termbox.ColorDefault)
 			} else {
+				// first draw normal, might be overruled
+				termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
 				// highlight reverse + magenta the current searchstring
-				if hitpos > 0 && x+s.offsetx >= hitpos && x+s.offsetx < hitpos+len(s.searchString) {
-					termbox.SetCell(x, y, rune, termbox.ColorMagenta+termbox.AttrReverse, termbox.ColorDefault)
-				} else {
-					termbox.SetCell(x, y, rune, color, termbox.ColorDefault)
+				for _, m := range matches {
+					if x+s.offsetx >= m.start && x+s.offsetx < m.end {
+						termbox.SetCell(x, y, rune, m.color, termbox.ColorDefault)
+					}
 				}
+
 			}
 		}
 	}
 
 	// status line
-	for x := 0; x < s.w; x++ {
+	for x := 0; x <= s.w; x++ {
 		termbox.SetCell(x, s.h-1, ' ', termbox.ColorBlack|termbox.AttrReverse, termbox.ColorDefault)
-	}
-
-	// ruler
-	ruler := int(float32(s.offsety) / float32(s.buffer.linecount-s.h) * 100.0)
-	rulerstring := fmt.Sprintf("%7d/%7d %3d%%", s.offsety, s.buffer.linecount, ruler)
-	for x := 0; x < len(rulerstring); x++ {
-		termbox.SetCell(s.w-22+x, s.h-1, rune(rulerstring[x]), termbox.ColorBlack|termbox.AttrReverse, termbox.ColorDefault)
 	}
 
 	// input mode for search
@@ -311,6 +324,13 @@ func (s *Screen) draw() {
 		for x := 0; x < len(helpstring); x++ {
 			termbox.SetCell(1+x, s.h-1, rune(helpstring[x]), termbox.ColorBlack|termbox.AttrReverse, termbox.ColorDefault)
 		}
+	}
+
+	// ruler
+	ruler := int(float32(s.offsety) / float32(s.buffer.linecount-s.h) * 100.0)
+	rulerstring := fmt.Sprintf("%7d/%7d %3d%% ", s.offsety, s.buffer.linecount, ruler)
+	for x := 0; x < len(rulerstring); x++ {
+		termbox.SetCell(s.w-22+x, s.h-1, rune(rulerstring[x]), termbox.ColorBlack|termbox.AttrReverse, termbox.ColorDefault)
 	}
 
 	// full redraw

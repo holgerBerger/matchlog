@@ -101,40 +101,41 @@ func (f *FlexFileT) parseLines() {
 		// this is the reference time from the time modul, templates show this time
 		// Mon Jan 2 15:04:05 MST 2006
 
-		match1 := fmt1.FindSubmatch(datestr.line)
 		index1 := fmt1.FindSubmatchIndex(datestr.line)
-		if match1 != nil {
+		if index1 != nil {
+			m1 := datestr.line[index1[1*2]:index1[1*2+1]]
+			m2 := datestr.line[index1[2*2]:index1[2*2+1]]
 			// FIXME hard coded year here, needs to replaced
-			t, err := time.ParseInLocation("2006 Jan 02 15:04:05", "2016 "+string(match1[1]), f.location)
+			t, err := time.ParseInLocation("2006 Jan 02 15:04:05", "2016 "+string(m1), f.location)
 			if err == nil {
 				f.lines[line].time = t
-				f.lines[line].host = string(match1[2])
+				f.lines[line].host = string(m2)
 				f.lines[line].hoststart = index1[2*2]
 				f.lines[line].hostend = index1[2*2+1]
 				continue
 			} else {
 				// FIXME hard coded year here, needs to replaced
-				t, err := time.ParseInLocation("2006 Jan  2 15:04:05", "2016 "+string(match1[1]), f.location)
+				t, err := time.ParseInLocation("2006 Jan  2 15:04:05", "2016 "+string(m1), f.location)
 				if err == nil {
-
 					f.lines[line].time = t
-					f.lines[line].host = string(match1[2])
+					f.lines[line].host = string(m2)
 					f.lines[line].hoststart = index1[2*2]
 					f.lines[line].hostend = index1[2*2+1]
 					continue
 				} else {
 					// FIXME wtf do we do here?
-					panic("could not parse date" + string(match1[1]))
+					panic("could not parse date" + string(m1))
 				}
 			}
 		} else {
-			match2 := fmt2.FindSubmatch(datestr.line)
 			index2 := fmt2.FindSubmatchIndex(datestr.line)
-			if match2 != nil {
-				t, err := time.ParseInLocation("2006-01-02T15:04:05", string(match2[1]), f.location)
+			if index2 != nil {
+				m1 := datestr.line[index2[1*2]:index2[1*2+1]]
+				m2 := datestr.line[index2[4*2]:index2[4*2+1]]
+				t, err := time.ParseInLocation("2006-01-02T15:04:05", string(m1), f.location)
 				if err == nil {
 					f.lines[line].time = t
-					f.lines[line].host = string(match2[4])
+					f.lines[line].host = string(m2)
 					f.lines[line].hoststart = index2[4*2]
 					f.lines[line].hostend = index2[4*2+1]
 					continue
