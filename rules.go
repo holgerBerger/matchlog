@@ -34,7 +34,9 @@ func (r *RulesT) Match(buffer []byte) termbox.Attribute {
 			return t
 		}
 	}
+
 	return termbox.ColorDefault
+
 }
 
 // RuleT describes color rules

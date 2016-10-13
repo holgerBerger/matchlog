@@ -117,6 +117,10 @@ func (s *ScreenT) eventHandler(eventQueue chan termbox.Event, exitQueue chan boo
 			if s.searchInput && ev.Type == termbox.EventKey && (ev.Key == termbox.KeyBackspace || ev.Key == termbox.KeyBackspace2 || ev.Key == termbox.KeyDelete) {
 				if len(s.searchString) > 0 {
 					s.searchString = s.searchString[:len(s.searchString)-1]
+					// update regex for search
+					if s.searchString != "" {
+						s.regex, _ = regexp.Compile(s.searchString)
+					}
 				}
 				s.draw()
 				break

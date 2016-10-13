@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
-	"strings"
+	"regexp"
 )
 
 // HostsT represesents a hostfile
@@ -24,6 +24,9 @@ func (h *HostsT) AddFile(filename string) {
 	if err != nil {
 		panic("can not read hostfile.")
 	}
+
+	regexp, _ := regexp.Compile(`\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s+(\S*).*`)
+
 	reader := bufio.NewReader(osfile)
 	for {
 		nextline, err := reader.ReadBytes('\n')
@@ -34,13 +37,13 @@ func (h *HostsT) AddFile(filename string) {
 			continue
 		}
 
-		f := strings.Split(string(nextline), " ")
-		if len(f) <= 1 {
-			continue
-		}
+		m := regexp.FindSubmatch(nextline)
 
-		ip := f[0]
-		h.ip2name[ip] = strings.Trim(f[1], " \t\n")
+		if m != nil && len(m) > 2 {
+			ip := string(m[1])
+			name := string(m[2])
+			h.ip2name[ip] = name
+		}
 
 	}
 }
